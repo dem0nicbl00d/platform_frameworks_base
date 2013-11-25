@@ -3327,6 +3327,18 @@ public final class Settings {
         public static final String KEY_APP_SWITCH_LONG_PRESS_ACTION = "key_app_switch_long_press_action";
 
         /**
+         * Whether to use the custom status bar header or not
+         * @hide
+         */
+        public static final String STATUS_BAR_CUSTOM_HEADER = "status_bar_custom_header";
+
+        /**
+         * Current active provider
+         * @hide
+         */
+        public static final String STATUS_BAR_CUSTOM_HEADER_PROVIDER = "status_bar_custom_header_provider";
+
+        /**
          * Settings to backup. This is here so that it's in the same place as the settings
          * keys and easy to update.
          *
