@@ -35,7 +35,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.os.SystemProperties;
 import android.os.UserHandle;
 import android.provider.MediaStore;
 import android.service.media.CameraPrewarmService;
@@ -52,7 +51,6 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.android.internal.widget.LockPatternUtils;
-import com.android.keyguard.EmergencyButton;
 import com.android.keyguard.KeyguardUpdateMonitor;
 import com.android.keyguard.KeyguardUpdateMonitorCallback;
 import com.android.systemui.EventLogConstants;
@@ -95,7 +93,6 @@ public class KeyguardBottomAreaView extends FrameLayout implements View.OnClickL
     private static final int DOZE_ANIMATION_STAGGER_DELAY = 48;
     private static final int DOZE_ANIMATION_ELEMENT_DURATION = 250;
 
-    private EmergencyButton mEmergencyButton;
     private KeyguardAffordanceView mCameraImageView;
     private KeyguardAffordanceView mLeftAffordanceView;
     private LockIcon mLockIcon;
@@ -196,7 +193,6 @@ public class KeyguardBottomAreaView extends FrameLayout implements View.OnClickL
         super.onFinishInflate();
         mLockPatternUtils = new LockPatternUtils(mContext);
         mPreviewContainer = (ViewGroup) findViewById(R.id.preview_container);
-        mEmergencyButton = (EmergencyButton) findViewById(R.id.emergency_call_button);
         mCameraImageView = (KeyguardAffordanceView) findViewById(R.id.camera_button);
         mLeftAffordanceView = (KeyguardAffordanceView) findViewById(R.id.left_button);
         mLockIcon = (LockIcon) findViewById(R.id.lock_icon);
@@ -206,7 +202,6 @@ public class KeyguardBottomAreaView extends FrameLayout implements View.OnClickL
         mUnlockMethodCache = UnlockMethodCache.getInstance(getContext());
         mUnlockMethodCache.addListener(this);
         mLockIcon.update();
-        updateEmergencyButton();
         setClipChildren(false);
         setClipToPadding(false);
         mPreviewInflater = new PreviewInflater(mContext, new LockPatternUtils(mContext));
@@ -239,7 +234,6 @@ public class KeyguardBottomAreaView extends FrameLayout implements View.OnClickL
         mIndicationText.setTextSize(TypedValue.COMPLEX_UNIT_PX,
                 getResources().getDimensionPixelSize(
                         com.android.internal.R.dimen.text_size_small_material));
-        updateEmergencyButton();
     }
 
     public void setActivityStarter(ActivityStarter activityStarter) {
@@ -697,5 +691,52 @@ public class KeyguardBottomAreaView extends FrameLayout implements View.OnClickL
                 mEmergencyButton.updateEmergencyCallButton();
             }
         }
+    }
+    private String getIndexHint(LockscreenShortcutsHelper.Shortcuts shortcut) {
+        if (mShortcutHelper.isTargetCustom(shortcut)) {
+            boolean isRtl = getLayoutDirection() == LAYOUT_DIRECTION_RTL;
+            String label = mShortcutHelper.getFriendlyNameForUri(shortcut);
+            int resId = 0;
+            switch (shortcut) {
+                case LEFT_SHORTCUT:
+                    resId = isRtl ? R.string.right_shortcut_hint : R.string.left_shortcut_hint;
+                    break;
+                case RIGHT_SHORTCUT:
+                    resId = isRtl ? R.string.left_shortcut_hint : R.string.right_shortcut_hint;
+                    break;
+            }
+            return mContext.getString(resId, label);
+        } else {
+            return null;
+        }
+    }
+
+    public String getLeftHint() {
+        String label = getIndexHint(LockscreenShortcutsHelper.Shortcuts.LEFT_SHORTCUT);
+        if (label == null) {
+            if (isLeftVoiceAssist()) {
+                label = mContext.getString(R.string.voice_hint);
+            } else {
+                label = mContext.getString(R.string.phone_hint);
+            }
+        }
+        return label;
+    }
+
+    public String getRightHint() {
+        String label = getIndexHint(LockscreenShortcutsHelper.Shortcuts.RIGHT_SHORTCUT);
+        if (label == null) {
+            label = mContext.getString(R.string.camera_hint);
+        }
+        return label;
+    }
+
+    public boolean isTargetCustom(LockscreenShortcutsHelper.Shortcuts shortcut) {
+        return mShortcutHelper.isTargetCustom(shortcut);
+    }
+
+    @Override
+    public void onChange() {
+        updateCustomShortcuts();
     }
 }
